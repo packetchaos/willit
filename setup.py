@@ -19,7 +19,7 @@ setup(
     install_requires=[
         'Click>=7.0.0',
         'requests>=2.26.0',
-        'pyexpect>=4.8.0'
+        'pexpect>=4.8.0'
     ],
     python_requires='>=3.0',
     extras_require={},
