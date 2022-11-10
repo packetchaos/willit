@@ -1,4 +1,5 @@
 import pexpect
+from pexpect import pxssh
 import click
 from .database import db_query
 
@@ -20,7 +21,7 @@ def send_command(shell, cmd, quick):
     print(response.decode('utf-8'))
     print()
 
-
+'''
 def connect(user, host, password):
     ssh_new_key_string = 'Are you sure you want to continue connecting'
     ssh_login_string = 'ssh {}@{}'.format(user, host)
@@ -28,6 +29,9 @@ def connect(user, host, password):
     shell = pexpect.spawn(ssh_login_string)
 
     return_code = shell.expect([pexpect.TIMEOUT, ssh_new_key_string, '[P|p]assword:'])
+
+    print(return_code)
+    print(shell)
 
     if return_code == 0:
         print("error connecting")
@@ -40,10 +44,42 @@ def connect(user, host, password):
         if second_return_code == 0:
             print("error connecting")
             return
+    if return_code == 2:
+        prompt_two = 'authorized users only'
+        shell.sendline()
+        shell.expect(prompt_two)
+        return shell
 
     shell.sendline(password)
     shell.expect(PROMPT)
     return shell
+'''
+
+
+def connect(user, host, password, command):
+
+    try:
+        if "sudo" in command:
+            conn = pxssh.pxssh()
+            conn.login(host, user, password)
+            conn.sendline(command)
+            conn.prompt()
+            conn.sendline(password)
+            conn.prompt()
+
+            raw = conn.before
+            print(raw.decode('utf-8'))
+            conn.logout()
+        else:
+            conn = pxssh.pxssh()
+            conn.login(host, user, password)
+            conn.sendline(command)
+            conn.prompt()
+            raw = conn.before
+            print(raw.decode('utf-8'))
+            conn.logout()
+    except pxssh.ExceptionPxssh as e:
+        print(e)
 
 
 def scp(user, host, password, filename):
@@ -76,9 +112,8 @@ def scp(user, host, password, filename):
 @click.command(help="Push a command to a linux target")
 @click.option('--command', default='', required=True, help="Command you want to run in double-quotes")
 @click.option('--target', default='', required=True, help="Target IP receiving the command")
-@click.option('--wait', is_flag=True, help="Wait for longer commands")
 @click.option('--file', default=None, help="Push a file to a target")
-def push(command, target, wait, file):
+def push(command, target, file):
 
     try:
         credentials = db_query("select username, password from ssh;")
@@ -87,12 +122,7 @@ def push(command, target, wait, file):
         if file:
             scp(user, target, password, file)
         else:
-            shell = connect(user, target, password)
-
-            if wait:
-                send_command(shell, command, quick=0)
-            else:
-                send_command(shell, command, quick=1)
+            connect(user, target, password, command)
 
     except Exception as E:
         click.echo("Please use the 'will ssh' command to enter your ssh credentials\n "
