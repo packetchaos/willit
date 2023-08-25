@@ -2,6 +2,7 @@ import socket
 import click
 import threading
 from queue import Queue
+from .request import request
 
 
 lock = threading.Lock()
@@ -18,11 +19,12 @@ def worker():
 
 
 def banner(ip_address, port):
+    socket.setdefaulttimeout(2)
+    soc = socket.socket()
     try:
-        socket.setdefaulttimeout(2)
-        soc = socket.socket()
         soc.connect((ip_address, int(port)))
         click.echo("\nPort: {} is Open.. Attempting Banner Grab\n".format(port))
+
         banner_grab = soc.recv(1024)
         click.echo("Port: {}... Banner: {}".format(port, banner_grab))
 
@@ -34,18 +36,20 @@ def banner(ip_address, port):
         pass
 
 
-@click.command()
+@click.command(help='A simple ping sweep with a banner grab')
 @click.argument('ip_addr')
 @click.option('--port', default=None, help="Grab a banner from a particular Port")
-def scan(ip_addr, port):
+@click.option('--start', default=1, help="Start of the port range")
+@click.option('--end', default=1024, help="End of the port range")
+def scan(ip_addr, port, start, end):
     ports = []
     if port:
-        click.echo("Performing a Banner grab on : {} over port {}".format(ip_addr, port))
+        click.echo("\nPerforming a Banner grab on : {} over port {}".format(ip_addr, port))
         banner(ip_addr, int(port))
     else:
-        click.echo("Performing a Banner grab on : {} over the first 1024 ports".format(ip_addr))
+        click.echo("\nPerforming a Banner grab on : {} over the port range {}:{}".format(ip_addr, start, end))
 
-        for port in range(1025):
+        for port in range(start, end, 1):
             ports.append((ip_addr, port))
 
         for i in range(1000):

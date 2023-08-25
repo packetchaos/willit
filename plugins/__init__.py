@@ -7,6 +7,7 @@ from .sweep import scan
 from .base_decode import debase
 from .bs import bs
 from .request import request
+from .keep_alive import stayalive
 
 
 def plugin_loader(group):
@@ -19,3 +20,4 @@ def plugin_loader(group):
     group.add_command(debase)
     group.add_command(bs)
     group.add_command(request)
+    group.add_command(stayalive)

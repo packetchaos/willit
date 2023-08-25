@@ -12,7 +12,7 @@ def smtp():
     from_email = input("Enter your Email Address - ex: youremail@gmail.com ")
     password = getpass.getpass("Enter your email password - : ")
 
-    database = r"navi.db"
+    database = r"willit.db"
     conn = new_db_connection(database)
     drop_tables(conn, 'smtp')
     create_smtp_table = """CREATE TABLE IF NOT EXISTS smtp (
